@@ -1,8 +1,4 @@
 {
-  "name": "gemini-backend",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "@google/genai": "^0.7.0"
-  }
+  "name": "gemini-api",
+  "version": "1.0.0"
 }
