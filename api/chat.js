@@ -1,42 +1,34 @@
 import { GoogleGenAI } from "@google/genai";
 
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY
+});
+
 export default async function handler(req, res) {
-  // ✅ CORS HEADERS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // ✅ Handle preflight request
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST allowed" });
   }
 
   try {
-    const { prompt } = req.body;
+    const { messages } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({ error: "Prompt missing" });
-    }
-
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
+    // Convert to Gemini format
+    const contents = messages.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.text }]
+    }));
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents
     });
 
-    res.status(200).json({
-      reply: response.text,
-    });
-  } catch (err) {
-    res.status(500).json({
-      error: err.message,
-    });
+    const reply =
+      response.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+    res.status(200).json({ reply });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 }
