@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle preflight request
+  // ✅ Handle preflight request
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -19,24 +19,24 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({ reply: "No prompt provided" });
+      return res.status(400).json({ error: "Prompt missing" });
     }
 
-    // Gemini client (API key comes from ENV automatically)
-    const ai = new GoogleGenAI({});
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
 
-    const result = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
     });
 
-    const text =
-      result.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response";
-
-    return res.status(200).json({ reply: text });
+    res.status(200).json({
+      reply: response.text,
+    });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ reply: "Server error" });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 }
